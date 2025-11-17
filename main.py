@@ -192,10 +192,14 @@ def generate_vars_file() -> None:
 from pydantic import BaseModel
 from typing import Optional
 
-class EchoInput(BaseModel):
+# 變數定義
 '''
-    
     # 按字母順序排序變數以保持一致性
+    for var in sorted(variables):
+        vars_content += f'# {var}\n'
+    
+    vars_content += 'class EchoInput(BaseModel):\n'
+
     for var in sorted(variables):
         vars_content += f'    {var}: Optional[str] = None\n'
     

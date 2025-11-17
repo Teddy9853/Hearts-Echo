@@ -4,6 +4,10 @@
 from pydantic import BaseModel
 from typing import Optional
 
+# 變數定義
+# clothe
+# mood
+# weather
 class EchoInput(BaseModel):
     clothe: Optional[str] = None
     mood: Optional[str] = None
