@@ -57,6 +57,6 @@ pip install -r requirements.txt
 python main.py
 ```
 
-The API will be available at: `http://localhost:8000`
-API documentation (Swagger UI): `http://localhost:8000/docs`
-Alternative documentation (ReDoc): `http://localhost:8000/redoc`
+The API will be available at: `http://localhost:8000`  
+API documentation (Swagger UI): `http://localhost:8000/docs`  
+Alternative documentation (ReDoc): `http://localhost:8000/redoc`  
