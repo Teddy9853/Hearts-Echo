@@ -8,3 +8,47 @@ On a {weather} day, you felt {mood}.
 You put on a {clothe}.
 It was a {weather} day.
 You felt {mood}.
+Early in the {timeOfDay}, you {mood}ly chose a {color} {clothe} and an {accessory}.
+You and {companion} went out to {location}, wearing a {color} {clothe} for the {weather} weather.
+In a {weather} afternoon, feeling {mood} ({emotionIntensity}), you picked a {clothe} to go {activity}.
+At {timeOfDay}, you grabbed your {accessory} and the {clothe} that matched your {mood}.
+Feeling {mood}, you added a {color} scarf and your {accessory} before leaving for {location}.
+On a {weather} night you wore a {clothe} to {activity} with {companion}.
+With a {color} accent, your {clothe} reflected a {mood} spirit.
+Despite the {weather}, you confidently wore a {clothe} and a {accessory}.
+Today you combined {color} and {clothe} for an outfit fit for {activity}.
+Under {weather} skies, a {clothe} and your {accessory} kept you comfortable.
+Feeling {mood} and {emotionIntensity}, you chose a {clothe} for {timeOfDay}.
+You paired the {clothe} with {accessory} to match the {weather} mood.
+Heading to {location}, you wore your favorite {clothe} and a {color} hat.
+To {activity}, you dressed in a {color} {clothe}, feeling {mood}.
+A {weather} breeze and a {color} sweater matched your {mood}.
+When {companion} joined, you both wore casual {clothe} for {activity}.
+You wrapped a {color} coat around your {clothe} on that {weather} day.
+Your {accessory} added a playful note to the {clothe} you picked.
+On a quiet {timeOfDay}, you felt {mood} and chose a comfy {clothe}.
+Bright {weather} made your {color} outfit feel {mood}.
+To celebrate, you dressed in a {clothe} with a {accessory} and headed to {location}.
+Feeling {mood}, you went out for {activity} wearing a {color} {clothe}.
+That {weather} afternoon, a {clothe} and a {color} scarf were perfect.
+You put on a {clothe}, grabbed your {accessory}, and walked toward {location}.
+The {clothe} you chose matched the {timeOfDay} and your {mood}.
+On a {temperature} {timeOfDay}, your {outfitStyle} {clothe} and {accessory} made you feel {mood}.
+You took the {transport} to {location}, wearing a {color} {clothe} for {occasion}.
+Despite {weather} and {temperature}, your {outfitStyle} choice left you feeling {mood}.
+For the {occasion}, a {color} {clothe} and a subtle {accessory} fit your {mood} perfectly.
+With {companion} and a quick {transport}, you headed out in a {clothe} feeling {companyMood}.
+Your {outfitStyle} look—{color} {clothe} with {accessory}—matched the {weather} atmosphere.
+Late in the {timeOfDay}, you changed into a {clothe} better suited for {activity}.
+The {temperature} made you pick a layered {clothe} and a {color} coat.
+To stay cozy in {weather}, you chose a {clothe} and wrapped a {color} scarf-like {accessory}.
+An impromptu {activity} with {companion} led you to swap into a casual {clothe} and {accessory}.
+On the way to {occasion}, your {color} outfit and {accessory} brightened the {timeOfDay}.
+You matched the {clothe} to the {occasion}, feeling {emotionIntensity} and {mood}.
+A {weather} morning and cool {temperature} called for your favorite warm {clothe}.
+You layered a {color} sweater over the {clothe} for both comfort and {outfitStyle}.
+The {clothe} and {accessory} you picked were practical for {activity} and the {weather}.
+With a small {accessory}, your {color} {clothe} turned into a statement for the {occasion}.
+Feeling {mood}, you picked a {clothe} that matched the {companyMood} of {companion}.
+That {timeOfDay}, the {temperature} and the {weather} nudged you toward a cozier {clothe}.
+You chose a {clothe} that made transit by {transport} comfortable for the trip to {location}.
