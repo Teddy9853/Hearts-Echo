@@ -119,6 +119,38 @@ async def echo(data: EchoInput):
         ignore=list(available_data.keys())
     )
 
+
+@app.get("/fields")
+async def get_fields():
+    """
+    列出 EchoInput 模型的所有欄位名稱
+    """
+    return {"fields": list(EchoInput.model_fields.keys())}
+
+class TemplateInfo(BaseModel):
+    template: str
+    params: List[str]
+
+@app.get("/templates")
+async def get_templates() -> List[TemplateInfo]:
+    """
+    列出所有可用的句子範本
+    """
+    templates = load_templates()
+    
+    # 將範本轉換為更友善的格式
+    template_list: List[TemplateInfo] = []
+    for template_str, params in templates:
+        template_list.append(TemplateInfo(
+            template=template_str,
+            params=params
+        ))
+    
+    return template_list
+
+# ==============================
+# Helper Functions
+# ==============================
 @cache
 def load_templates() -> List[Tuple[str, List[str]]]:
     """
