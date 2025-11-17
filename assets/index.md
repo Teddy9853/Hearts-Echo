@@ -30,33 +30,3 @@ Hearts Echo 會根據你提供的資訊，自動生成一段自然的文字描�
 
 訪問 [Docs](/docs) 查看完整功能說明  
 訪問 [GitHub](https://github.com/Teddy9853/Hearts-Echo) 查看源代碼
-
-# For Developers
-## How to install:
-
-Create virtual environment:
-```bash
-python -m venv .venv
-```
-
-Enter virtual environment:
-```cmd
-.venv\Scripts\activate
-# Or linux or macOS:
-# source .venv/bin/activate
-```
-
-Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-## How to run:
-```cmd
-.venv\Scripts\activate
-python main.py
-```
-
-The API will be available at: `http://localhost:8000`
-API documentation (Swagger UI): `http://localhost:8000/docs`
-Alternative documentation (ReDoc): `http://localhost:8000/redoc`
