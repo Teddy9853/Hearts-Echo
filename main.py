@@ -3,21 +3,16 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
-from typing import Optional, List, Tuple
+from typing import List, Tuple
 import uvicorn
 import markdown
 from pathlib import Path
 import random
 import re
 
-app = FastAPI(title="Hearts Echo API", version="1.0.0")
+from vars import EchoInput
 
-# 定義輸入模型
-class EchoInput(BaseModel):
-    clothe: Optional[str] = None
-    weather: Optional[str] = None
-    mood: Optional[str] = None
-    date: Optional[str] = None
+app = FastAPI(title="Hearts Echo API", version="1.0.0")
 
 # 定義輸出模型
 class EchoOutput(BaseModel):
@@ -171,6 +166,45 @@ def load_templates() -> List[Tuple[str, List[str]]]:
         templates.append((line, params))
     
     return templates
+
+# 在啟動時生成 vars.py
+def generate_vars_file() -> None:
+    """
+    讀取 templates.txt，解析所有變數，並生成 vars.py
+    """
+    template_file = Path("assets/templates.txt")
+    content = template_file.read_text(encoding="utf-8")
+    
+    # 收集所有變數
+    variables: set[str] = set()
+    for line in content.split('\n'):
+        line = line.strip()
+        if not line:
+            continue
+        # 使用正則表達式找出所有 {參數名} 格式的參數
+        params = re.findall(r'\{(\w+)\}', line)
+        variables.update(params)
+    
+    # 生成 vars.py 內容
+    vars_content = '''"""自動生成的變數定義檔案
+此檔案由 main.py 從 assets/templates.txt 自動生成，請勿手動編輯。
+"""
+from pydantic import BaseModel
+from typing import Optional
+
+class EchoInput(BaseModel):
+'''
+    
+    # 按字母順序排序變數以保持一致性
+    for var in sorted(variables):
+        vars_content += f'    {var}: Optional[str] = None\n'
+    
+    # 寫入 vars.py
+    vars_file = Path("vars.py")
+    vars_file.write_text(vars_content, encoding="utf-8")
+    print(f"Generated vars.py with variables: {sorted(variables)}")
+
  
 if __name__ == "__main__":
+    generate_vars_file()
     uvicorn.run(app, host="0.0.0.0", port=8000)
