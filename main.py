@@ -79,7 +79,9 @@ async def echo(data: EchoInput):
     # 從範本檔案載入欄位定義
     all_templates = load_templates()
     
-    available_data = {k: v for k, v in data.model_dump(exclude_none=True).items() if v is not None}
+    # Extract 'required' field separately and exclude it from available_data
+    required_params = data.required if data.required else []
+    available_data = {k: v for k, v in data.model_dump(exclude_none=True).items() if v is not None and k != 'required'}
     
     if not available_data:
         return EchoOutput(
@@ -91,17 +93,22 @@ async def echo(data: EchoInput):
     # 篩選出可以滿足的範本
     valid_templates: List[Tuple[str, List[str]]] = []
     weights: List[int] = []
-    for template_str, required_params in all_templates:
+    for template_str, template_params in all_templates:
         # 檢查是否所有必需參數都存在且有值
-        if all(param in available_data and available_data[param] for param in required_params):
-            weight = len(required_params) ** 2  # 參數數量的平方作為權重
-            valid_templates.append((template_str, required_params))
+        if all(param in available_data and available_data[param] for param in template_params):
+            # If 'required' is specified, check that all required params are in the template
+            if required_params:
+                if not all(req_param in template_params for req_param in required_params):
+                    continue  # Skip this template as it doesn't contain all required params
+            
+            weight = len(template_params) ** 2  # 參數數量的平方作為權重
+            valid_templates.append((template_str, template_params))
             weights.append(weight)
     
     # 如果有滿足條件的範本,根據權重隨機選擇一個
     if valid_templates:
         template_str, params = random.choices(valid_templates, weights=weights, k=1)[0]
-        exclude_fields = set(EchoInput.model_fields.keys()) - set(params)
+        exclude_fields = set(EchoInput.model_fields.keys()) - set(params) - {'required'}
         return EchoOutput(
             text=template_str.format(**available_data),
             used=params,
@@ -164,6 +171,11 @@ def load_templates() -> List[Tuple[str, List[str]]]:
             
         # 使用正則表達式找出所有 {參數名} 格式的參數
         params = re.findall(r'\{(\w+)\}', line)
+        
+        # 檢查是否包含保留字 'required'
+        if 'required' in params:
+            raise ValueError(f"Template contains reserved word 'required': {line}")
+        
         templates.append((line, params))
     
     return templates
@@ -184,6 +196,11 @@ def generate_vars_file() -> None:
             continue
         # 使用正則表達式找出所有 {參數名} 格式的參數
         params = re.findall(r'\{(\w+)\}', line)
+        
+        # 檢查是否包含保留字 'required'
+        if 'required' in params:
+            raise ValueError(f"Template contains reserved word 'required': {line}")
+        
         variables.update(params)
     
     # 生成 vars.py 內容
@@ -191,7 +208,7 @@ def generate_vars_file() -> None:
 此檔案由 main.py 從 assets/templates.txt 自動生成，請勿手動編輯。
 """
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 
 # 變數定義
 '''
@@ -203,6 +220,9 @@ from typing import Optional
 
     for var in sorted(variables):
         vars_content += f'    {var}: Optional[str] = None\n'
+    
+    # Add the 'required' field as a special parameter
+    vars_content += '    required: Optional[List[str]] = None  # List of parameter names that must be present in selected templates\n'
     
     # 寫入 vars.py
     vars_file = Path("vars.py")
