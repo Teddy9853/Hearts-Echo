@@ -172,9 +172,9 @@ def load_templates() -> List[Tuple[str, List[str]]]:
         # 使用正則表達式找出所有 {參數名} 格式的參數
         params = re.findall(r'\{(\w+)\}', line)
         
-        # 檢查是否包含保留字 'requied'
-        if 'requied' in params:
-            raise ValueError(f"Template contains reserved word 'requied': {line}")
+        # 檢查是否包含保留字 'required'
+        if 'required' in params:
+            raise ValueError(f"Template contains reserved word 'required': {line}")
         
         templates.append((line, params))
     
@@ -197,9 +197,9 @@ def generate_vars_file() -> None:
         # 使用正則表達式找出所有 {參數名} 格式的參數
         params = re.findall(r'\{(\w+)\}', line)
         
-        # 檢查是否包含保留字 'requied'
-        if 'requied' in params:
-            raise ValueError(f"Template contains reserved word 'requied': {line}")
+        # 檢查是否包含保留字 'required'
+        if 'required' in params:
+            raise ValueError(f"Template contains reserved word 'required': {line}")
         
         variables.update(params)
     
