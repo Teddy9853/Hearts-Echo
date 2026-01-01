@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Optional
 import uvicorn
 import markdown
 from pathlib import Path
@@ -12,6 +12,7 @@ import random
 import re
 from pathlib import Path
 from vars import EchoInput
+import modifiers
 
 app = FastAPI(title="Hearts Echo API", version="1.0.0")
 
@@ -77,11 +78,13 @@ async def echo(data: EchoInput):
     會使用 clothe, weather, mood 這些欄位，並忽略 date。
     """
     # 從範本檔案載入欄位定義
-    all_templates = load_templates(lang=data.lang)
+    payload = data.model_dump(exclude_none=True)
+    lang = payload.get('lang', 'en-us')
+    all_templates = load_templates(lang=lang)
     
     # Extract 'required' field separately and exclude it from available_data
-    required_params = data.required if data.required else []
-    available_data = {k: v for k, v in data.model_dump(exclude_none=True).items() if v is not None and k != 'required'}
+    required_params = payload.get('required', []) or []
+    available_data = {k: v for k, v in payload.items() if v is not None and k != 'required'}
     
     if not available_data:
         return EchoOutput(
@@ -91,26 +94,36 @@ async def echo(data: EchoInput):
         )
     
     # 篩選出可以滿足的範本
-    valid_templates: List[Tuple[str, List[str]]] = []
+    valid_templates: List[Tuple[str, List[str], Dict[str, Optional[str]]]] = []
     weights: List[int] = []
-    for template_str, template_params in all_templates:
+    for template_str, template_params, modifiers_map in all_templates:
         # 檢查是否所有必需參數都存在且有值
         if all(param in available_data and available_data[param] for param in template_params):
             # If 'required' is specified, check that all required params are in the template
             if required_params:
                 if not all(req_param in template_params for req_param in required_params):
                     continue  # Skip this template as it doesn't contain all required params
-            
+
             weight = len(template_params) ** 2  # 參數數量的平方作為權重
-            valid_templates.append((template_str, template_params))
+            valid_templates.append((template_str, template_params, modifiers_map))
             weights.append(weight)
-    
+
     # 如果有滿足條件的範本,根據權重隨機選擇一個
     if valid_templates:
-        template_str, params = random.choices(valid_templates, weights=weights, k=1)[0]
+        template_str, params, modifiers_map = random.choices(valid_templates, weights=weights, k=1)[0]
+        # Apply modifiers (if any) to a copy of available_data before formatting
+        formatted_data = dict(available_data)
+        globals_for_mod = {"required": required_params, "template": template_str}
+        for p, mod in modifiers_map.items():
+            if mod and p in formatted_data:
+                formatted_data[p] = modifiers.apply_modifier(mod, formatted_data[p], globals_for_mod)
+
+        # Sanitize template to remove modifier annotations so .format does not treat them as format specifiers
+        safe_template = re.sub(r'\{(\w+)(?:\s*:\s*\w+)?\}', r'{\1}', template_str)
+
         exclude_fields = set(EchoInput.model_fields.keys()) - set(params) - {'required'}
         return EchoOutput(
-            text=template_str.format(**available_data),
+            text=safe_template.format(**formatted_data),
             used=params,
             ignore=list(exclude_fields)
         )
@@ -143,7 +156,7 @@ async def get_templates() -> List[TemplateInfo]:
     
     # 將範本轉換為更友善的格式
     template_list: List[TemplateInfo] = []
-    for template_str, params in templates:
+    for template_str, params, _modmap in templates:
         template_list.append(TemplateInfo(
             template=template_str,
             params=params
@@ -151,14 +164,21 @@ async def get_templates() -> List[TemplateInfo]:
     
     return template_list
 
+@app.get("/modifiers")
+async def get_modifiers():
+    """
+    回傳可用的 modifiers 清單
+    """
+    return modifiers.list_modifiers()
+
 # ==============================
 # Helper Functions
 # ==============================
 @cache
-def load_templates(lang:str = "en-us") -> List[Tuple[str, List[str]]]:
+def load_templates(lang:str = "en-us") -> List[Tuple[str, List[str], Dict[str, Optional[str]]]]:
     """
-    載入句子模板並解析參數
-    回傳格式: (使用欄位列表, 未使用欄位列表, [(模板字串, [參數列表]), ...])
+    載入句子模板並解析參數與可選的 modifiers
+    回傳格式: List of (template_string, [param_names], {param_name: modifier_name_or_None})
     """
     if lang == "en-us":
         file_path = Path("assets/templates.txt")
@@ -169,21 +189,34 @@ def load_templates(lang:str = "en-us") -> List[Tuple[str, List[str]]]:
         file_path = Path("assets/templates.txt")
 
     content = file_path.read_text(encoding="utf-8")
-    templates: List[Tuple[str, List[str]]] = []
+    templates: List[Tuple[str, List[str], Dict[str, Optional[str]]]] = []
+    
+    # regex captures param and optional modifier: {param[:modifier]}
+    pattern = re.compile(r'\{(\w+)(?:\s*:\s*(\w+))?\}')
     
     for line in content.split('\n'):
         line = line.strip()
         if not line:
             continue
-            
-        # 使用正則表達式找出所有 {參數名} 格式的參數
-        params = re.findall(r'\{(\w+)\}', line)
-        
-        # 檢查是否包含保留字 'required'
-        if 'required' in params or 'lang' in params:
-            raise ValueError(f"Template contains reserved word 'required'or'lang': {line}")
-        
-        templates.append((line, params))
+
+        params: List[str] = []
+        modifiers_map: Dict[str, Optional[str]] = {}
+
+        for m in pattern.finditer(line):
+            param = m.group(1)
+            mod = m.group(2) or None
+
+            if param in ('required', 'lang'):
+                raise ValueError(f"Template contains reserved word 'required' or 'lang': {line}")
+
+            params.append(param)
+            modifiers_map[param] = mod
+
+            # Validate modifier existence if present
+            if mod and mod not in modifiers.MODIFIERS:
+                raise ValueError(f"Template uses unknown modifier '{mod}' in template: {line}")
+
+        templates.append((line, params, modifiers_map))
     
     return templates
 
@@ -197,18 +230,17 @@ def generate_vars_file() -> None:
     
     # 收集所有變數
     variables: set[str] = set()
+    pattern = re.compile(r'\{(\w+)(?:\s*:\s*(\w+))?\}')
     for line in content.split('\n'):
         line = line.strip()
         if not line:
             continue
-        # 使用正則表達式找出所有 {參數名} 格式的參數
-        params = re.findall(r'\{(\w+)\}', line)
-        
-        # 檢查是否包含保留字 'required'
-        if 'required' in params:
-            raise ValueError(f"Template contains reserved word 'required': {line}")
-        
-        variables.update(params)
+        # 使用正則表達式找出所有 {參數名} 格式的參數，並忽略 modifier 部分
+        for m in pattern.finditer(line):
+            param = m.group(1)
+            if param == 'required':
+                raise ValueError(f"Template contains reserved word 'required': {line}")
+            variables.add(param)
     
     # 生成 vars.py 內容
     vars_content = '''"""自動生成的變數定義檔案
