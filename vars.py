@@ -21,6 +21,7 @@ from typing import Optional, List
 # transport
 # weather
 class EchoInput(BaseModel):
+    lang: str = "en-us"
     accessory: Optional[str] = None
     activity: Optional[str] = None
     clothe: Optional[str] = None

@@ -10,7 +10,7 @@ import markdown
 from pathlib import Path
 import random
 import re
-
+from pathlib import Path
 from vars import EchoInput
 
 app = FastAPI(title="Hearts Echo API", version="1.0.0")
@@ -77,7 +77,7 @@ async def echo(data: EchoInput):
     會使用 clothe, weather, mood 這些欄位，並忽略 date。
     """
     # 從範本檔案載入欄位定義
-    all_templates = load_templates()
+    all_templates = load_templates(lang=data.lang)
     
     # Extract 'required' field separately and exclude it from available_data
     required_params = data.required if data.required else []
@@ -155,13 +155,20 @@ async def get_templates() -> List[TemplateInfo]:
 # Helper Functions
 # ==============================
 @cache
-def load_templates() -> List[Tuple[str, List[str]]]:
+def load_templates(lang:str = "en-us") -> List[Tuple[str, List[str]]]:
     """
     載入句子模板並解析參數
     回傳格式: (使用欄位列表, 未使用欄位列表, [(模板字串, [參數列表]), ...])
     """
-    template_file = Path("assets/templates.txt")
-    content = template_file.read_text(encoding="utf-8")
+    if lang == "en-us":
+        file_path = Path("assets/templates.txt")
+    else:
+        file_path = Path(f"assets/templates.{lang}.txt")
+
+    if not file_path.exists():
+        file_path = Path("assets/templates.txt")
+
+    content = file_path.read_text(encoding="utf-8")
     templates: List[Tuple[str, List[str]]] = []
     
     for line in content.split('\n'):
@@ -173,8 +180,8 @@ def load_templates() -> List[Tuple[str, List[str]]]:
         params = re.findall(r'\{(\w+)\}', line)
         
         # 檢查是否包含保留字 'required'
-        if 'required' in params:
-            raise ValueError(f"Template contains reserved word 'required': {line}")
+        if 'required' in params or 'lang' in params:
+            raise ValueError(f"Template contains reserved word 'required'or'lang': {line}")
         
         templates.append((line, params))
     
