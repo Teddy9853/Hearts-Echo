@@ -118,9 +118,12 @@ async def echo(data: EchoInput):
             if mod and p in formatted_data:
                 formatted_data[p] = modifiers.apply_modifier(mod, formatted_data[p], globals_for_mod)
 
+        # Sanitize template to remove modifier annotations so .format does not treat them as format specifiers
+        safe_template = re.sub(r'\{(\w+)(?:\s*:\s*\w+)?\}', r'{\1}', template_str)
+
         exclude_fields = set(EchoInput.model_fields.keys()) - set(params) - {'required'}
         return EchoOutput(
-            text=template_str.format(**formatted_data),
+            text=safe_template.format(**formatted_data),
             used=params,
             ignore=list(exclude_fields)
         )
